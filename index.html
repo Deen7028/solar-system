@@ -96,7 +96,7 @@
 
     <div id="ui-layer">
         <h1>SOLAR SYSTEM 3D</h1>
-        <p>ระบบสุริยะจำลอง - Three.js Engine</p>
+        <p>ระบบสุริยะจำลอง</p>
     </div>
 
     <div id="tooltip"></div>
@@ -155,7 +155,6 @@
             
             try {
                 // พยายามสร้าง WebGL Context โดยใช้ Canvas ที่เตรียมไว้
-                // ปิด alpha: false เพราะเรามีสีพื้นหลังทึบ ช่วยลดภาระได้
                 renderer = new THREE.WebGLRenderer({ 
                     canvas: canvasElement, 
                     antialias: true,
@@ -186,7 +185,9 @@
             controls = new OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true; 
             controls.dampingFactor = 0.05;
-            controls.minDistance = 10;
+            
+            // ปลดล็อกการซูม เพื่อให้เข้าไปในดวงอาทิตย์ได้ (รัศมีดวงอาทิตย์คือ 8)
+            controls.minDistance = 1; 
             controls.maxDistance = 400;
 
             // 5. Lighting
@@ -220,7 +221,7 @@
         }
 
         function createSun() {
-            const sunGeometry = new THREE.SphereGeometry(8, 32, 32); // ลด Polygon ลงเล็กน้อย
+            const sunGeometry = new THREE.SphereGeometry(8, 32, 32); 
             const sunMaterial = new THREE.MeshBasicMaterial({ color: 0xFFD700 });
             const sun = new THREE.Mesh(sunGeometry, sunMaterial);
             
@@ -237,13 +238,41 @@
             );
             sun.add(sunOuterGlow);
 
+            // --- เพิ่มชื่อ "Salwanee Baraheng" ---
+            const textCanvas = document.createElement('canvas');
+            const textCtx = textCanvas.getContext('2d');
+            // เพิ่มความละเอียด Canvas เพื่อให้ตัวหนังสือคมชัด
+            textCanvas.width = 512;
+            textCanvas.height = 128;
+            textCtx.font = 'bold 50px Sarabun, sans-serif'; // ฟอนต์ใหญ่ขึ้น
+            textCtx.fillStyle = '#FFFFFF'; // สีขาว
+            textCtx.textAlign = 'center';
+            textCtx.textBaseline = 'middle';
+            textCtx.fillText('Salwanee Baraheng', textCanvas.width / 2, textCanvas.height / 2);
+
+            const textTexture = new THREE.CanvasTexture(textCanvas);
+            const textMaterial = new THREE.SpriteMaterial({ 
+                map: textTexture,
+                transparent: true,
+                opacity: 0.9
+            });
+            const textSprite = new THREE.Sprite(textMaterial);
+            
+            // ปรับขนาด Scale ใน 3D World (เล็กๆ)
+            // เมื่อซูมเข้าไปใกล้ๆ Resolution ของ Texture จะทำงานให้ชัดเอง
+            textSprite.scale.set(4, 1, 1); 
+            textSprite.position.set(0, 0, 0); // วางไว้ใจกลาง
+            
+            sun.add(textSprite);
+            // ------------------------------------
+
             sun.userData = { name: "Sun (ดวงอาทิตย์)" };
             scene.add(sun);
         }
 
         function createPlanet(data) {
             const orbitCurve = new THREE.EllipseCurve(0, 0, data.distance, data.distance, 0, 2 * Math.PI, false, 0);
-            const points = orbitCurve.getPoints(100); // ลดจำนวนจุดลงเล็กน้อย
+            const points = orbitCurve.getPoints(100); 
             const orbitGeometry = new THREE.BufferGeometry().setFromPoints(points);
             const orbitMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.15 });
             const orbitLine = new THREE.LineLoop(orbitGeometry, orbitMaterial);
@@ -282,7 +311,7 @@
 
         function createStars() {
             const starsGeometry = new THREE.BufferGeometry();
-            const starsCount = 3000; // ปรับจำนวนให้เหมาะสม
+            const starsCount = 3000; 
             const posArray = new Float32Array(starsCount * 3);
             const scaleArray = new Float32Array(starsCount);
 
